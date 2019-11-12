@@ -49,9 +49,16 @@ public class BotClient {
         log.info("Sending request:\n\(httpRequest.description)")
         
         worker.eventLoop.execute {
-            self.send(request: httpRequest).whenSuccess({ (container) in
+            log.info("EventLoop sending request")
+            let future: Future<TelegramContainer<T>> = self.send(request: httpRequest)
+            future.whenSuccess({ (container) in
+                log.info("Sending request success")
                 promise.succeed(result: container)
             })
+            future.whenFailure { error in
+                log.info("Sending request error \(error.localizedDescription)")
+                promise.fail(error: error)
+            }
         }
         return promise.futureResult
     }
